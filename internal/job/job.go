@@ -31,8 +31,8 @@ type Handler interface {
 
 
 type JobManager struct {
-	Mu		sync.RWMutex
-	Jobs	map[string]Job
+	mu		sync.RWMutex
+	jobs	map[string]Job
 }
 
 // Return pointer to new JobManager
@@ -45,34 +45,34 @@ func NewJobManager() *JobManager {
 
 // Methods of JobManager
 func (jm *JobManager) AddJob(s Job) {
-	jm.Mu.Lock()
-	defer jm.Mu.Unlock()
+	jm.mu.Lock()
+	defer jm.mu.Unlock()
 
-	jm.Jobs[s.ID] = s
+	jm.jobs[s.ID] = s
 }
 
 
 func (jm *JobManager) UpdateStatus(id string, status Status) {
-	jm.Mu.Lock()
-	defer jm.Mu.Unlock()
+	jm.mu.Lock()
+	defer jm.mu.Unlock()
 
-	job := jm.Jobs[id]
+	job := jm.jobs[id]
 	job.Status = status
-	jm.Jobs[id] = job
+	jm.jobs[id] = job
 }
 
 func (jm *JobManager) GetOne(id string) Job {
-	jm.Mu.RLock()
-	defer jm.Mu.RUnlock()
+	jm.mu.RLock()
+	defer jm.mu.RUnlock()
 
-	j := jm.Jobs[id]
+	j := jm.jobs[id]
 	return j
 }
 
 func (jm *JobManager) GetAll() map[string]Job {
-	jm.Mu.RLock()
-	defer jm.Mu.RUnlock()
+	jm.mu.RLock()
+	defer jm.mu.RUnlock()
 
-	copyJobMap := maps.Clone(jm.Jobs)
+	copyJobMap := maps.Clone(jm.jobs)
 	return copyJobMap
 }

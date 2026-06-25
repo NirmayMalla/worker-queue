@@ -28,7 +28,7 @@ var handlers = map[string]job.Handler {
 }
 
 // Create a worker pool
-var p = worker.NewPool(conf.WorkerCount, handlers)
+var p = worker.NewPool(conf.WorkerCount, handlers, conf.QueueSize)
 
 func main() {
 	

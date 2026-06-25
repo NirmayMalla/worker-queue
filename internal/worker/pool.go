@@ -11,12 +11,13 @@ type Pool struct {
 	queue 		chan job.Job 
 	handlers 	map[string]job.Handler
 	wg				sync.WaitGroup
+	queueSize int
 }
 
-func NewPool(count int, handlers map[string]job.Handler) *Pool {
+func NewPool(count int, handlers map[string]job.Handler, queueSize int) *Pool {
 	return &Pool {
 		count: count,
-		queue: make(chan job.Job, 100),
+		queue: make(chan job.Job, queueSize),
 		handlers : handlers,
 	} 
 }
