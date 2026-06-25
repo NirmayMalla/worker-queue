@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-job-project/internal/job"
 	"go-job-project/internal/worker"
+	"go-job-project/internal/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +19,8 @@ import (
 // Create job manager
 var jm = job.NewJobManager()
 
+var conf = config.Setup()
+
 var handlers = map[string]job.Handler {
 	"Send_email": 		job.EmailHandler{},
 	"Process_file": 	job.FileHandler{},
@@ -25,9 +28,18 @@ var handlers = map[string]job.Handler {
 }
 
 // Create a worker pool
-var p = worker.NewPool(5, handlers)
+var p = worker.NewPool(conf.WorkerCount, handlers)
 
 func main() {
+	
+	server := &http.Server{Addr: conf.Port}
+	
+	// Run server in goroutine
+	go func() {
+		fmt.Printf("\n[+] Server running on http://localhost:8080 (http://localhost:8080/jobs)\n\n")
+		server.ListenAndServe()
+	}()
+
 
 	// Routes
 	http.HandleFunc("/jobs", handleJobs)
@@ -37,20 +49,9 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 
-	server := &http.Server{
-		Addr: ":8080",
-	}
-
-	// Run server in goroutine
-	go func() {
-		fmt.Printf("\n[+] Server running on http://localhost:8080 (http://localhost:8080/jobs)\n\n")
-		server.ListenAndServe()
-	}()
-
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<- quit
 	
-
 	fmt.Printf("\n[!] Shutting down server...\n\n")
 	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
 
@@ -67,9 +68,11 @@ func handleJobs(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		w.Header().Set("Content-Type", "application/json")
 		
-		jobs := jm.GetAll()		
+		jobs := jm.GetAll()
 			
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(jobs)
+		
 		return
 	}
 
@@ -80,7 +83,18 @@ func handleJobs(w http.ResponseWriter, r *http.Request) {
 			Payload string	`json:"payload"`
 		}
 
-		json.NewDecoder(r.Body).Decode(&req)
+		err := json.NewDecoder(r.Body).Decode(&req)
+
+		// Malformed Data
+		if err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		if req.Type == "" {
+			http.Error(w, "A job type is required", http.StatusBadRequest)
+			return
+		}
 
 		someJob := job.Job{
 			ID: strconv.FormatInt(time.Now().UnixNano(), 10),
@@ -90,14 +104,16 @@ func handleJobs(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: time.Now(),
 		}
 		
-		jm.AddJob(someJob)		// database
+		jm.AddJob(someJob)		// database [map]
 
 		p.Submit(someJob)	// add to queue (channel)
 
 		// SEND RESPONSE
 		w.Header().Set("Content-Type", "application/json")
+		
+		w.WriteHeader(http.StatusCreated)	
 		json.NewEncoder(w).Encode(someJob)
-	
+		
 		return
 	}
 }
@@ -110,12 +126,22 @@ func handleJob(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(path, "/jobs/")
 
 	if id == "" || strings.Contains(id, "/") {
-		http.NotFound(w, r)
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	
+	// When the use wants to retrive their processed work
+	job := jm.GetOne(id)
+
+	// Might return a zero-value job {ID: ""}
+
+	if job.ID == "" {
+		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
 
-	job := jm.GetOne(id)
-	
 	w.Header().Set("Content-Type", "application/json")
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(job)
 }

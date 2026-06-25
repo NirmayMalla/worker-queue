@@ -41,7 +41,14 @@ func (p *Pool) Start(jm *job.JobManager) {
 					continue
 				}
 				
-				handler.Handle(j)
+				error := handler.Handle(j)
+
+				// If handling the job returns an error
+				if error != nil {
+					jm.UpdateStatus(j.ID, job.StatusFailed)
+					continue
+				}
+
 				jm.UpdateStatus(j.ID, job.StatusDone)
 
 				fmt.Printf("[ Worker %d ]: Job done, %s, %s\n",id, j.ID, j.Type)

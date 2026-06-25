@@ -26,7 +26,7 @@ const (
 
 
 type Handler interface {
-	Handle(j Job)
+	Handle(j Job) error
 }
 
 
