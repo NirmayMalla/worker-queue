@@ -31,7 +31,7 @@ cmd/
 └─── main.go
 
 internal
-└─── config/
+├─── config/
 ├─── job/
 └─── worker/
 ```
