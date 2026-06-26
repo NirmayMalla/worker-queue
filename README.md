@@ -72,7 +72,7 @@ Workers read from the queue, update job status ("Processing")execute the appropr
 ```json
 {
     "type": "Process_file"
-    "payload: "example.txt"
+    "payload": "example.txt"
 }
 ```
 ### Queue full:
