@@ -67,41 +67,33 @@ Workers read from the queue, update job status ("Processing")execute the appropr
 |  GET   | jobs/id  |  Retrieve specific job   |
 
 
-Posting job:
-```
-POST /jobs
-```
-```
+### Posting job:
+#### POST ```/jobs```
+```json
 {
     "type": "Process_file"
     "payload: "example.txt"
 }
 ```
-Queue full:
-```
-GET /jobs/{id}
-```
-```
+### Queue full:
+#### GET ```/jobs/{id}```
+```json
 {
     "id": "..."
     "status": "Pending"
 }
 ```
-Before process completion:
-```
-GET /jobs/{id}
-```
-```
+### Before process completion:
+#### GET ```/jobs/{id}```
+```json
 {
     "id": "..."
     "status": "Processing"
 }
 ```
-After process time:
-```
-GET /jobs/{id}
-```
-```
+### After process time:
+#### GET ```/jobs/{id}```
+```json
 {
     "id": "..."
     "status": "Done"
