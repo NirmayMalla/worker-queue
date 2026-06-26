@@ -59,13 +59,13 @@ A POST request creates a job and places it into the worker queue (buffered chann
 
 Workers read from the queue, update job status ("Processing")execute the appropriate handler and finally mark the job as "Done"
 
-```
+
 | Method | Endpoint |       Description        |
 |--------|----------|--------------------------|
 |  POST  |   /jobs  |      Create new job      |
 |  GET   |   /jobs  |    Retrieve all jobs     |
 |  GET   | jobs/id  |  Retrieve specific job   |
-```
+
 
 Posting job:
 ```
