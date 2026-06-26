@@ -32,6 +32,10 @@ var p = worker.NewPool(conf.WorkerCount, handlers, conf.QueueSize)
 
 func main() {
 	
+	// Routes
+	http.HandleFunc("/jobs", handleJobs)
+	http.HandleFunc("/jobs/", handleJob)
+
 	server := &http.Server{Addr: conf.Port}
 	
 	// Run server in goroutine
@@ -39,11 +43,6 @@ func main() {
 		fmt.Printf("\n[+] Server running on http://localhost:8080 (http://localhost:8080/jobs)\n\n")
 		server.ListenAndServe()
 	}()
-
-
-	// Routes
-	http.HandleFunc("/jobs", handleJobs)
-	http.HandleFunc("/jobs/", handleJob)
 
 	p.Start(jm)	
 
